@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  advertisments_api:
+    image: advertisments_api
+    build:
+      context: ../src
+      dockerfile: /AdSyst.Advertisments/Dockerfile
+    expose:
+      - "80"
+      - "36600"
+    depends_on:
+      advertisments_db:
+        condition: service_healthy
+      auth_service:
+        condition: service_started
+      rabbit:
+        condition: service_started
+      redis_cache:
+        condition: service_started
+
+  advertisments_db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: advertisments_db
+    expose:
+      - "1433"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  auth_service:
+    image: auth_service
+    build:
+      context: ../src
+      dockerfile: /AdSyst.AuthService/Dockerfile
+    expose:
+      - "80"
+      - "36600"
+    depends_on:
+      auth_service_db:
+        condition: service_healthy
+      rabbit:
+        condition: service_started
+
+  auth_service_db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: auth_service_db
+    expose:
+      - "1433"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  rabbit:
+    image: rabbitmq:3-management
+    container_name: rabbit
+    expose:
+      - "5672:5672"
+
+  email_worker:
+    image: email_worker
+    build:
+      context: ../src
+      dockerfile: /AdSyst.EmailWorker/Dockerfile
+    depends_on:
+      - rabbit
+
+  notification_service:
+    image: notification_service
+    build: 
+      context: ../src
+      dockerfile: /AdSyst.NotificationService/Dockerfile
+    expose:
+      - "80"
+    depends_on:
+      - rabbit
+      - notifications_db
+      - auth_service
+
+  notifications_db:
+    image: mongo
+    expose:
+      - "27017"
+
+  moderation_service:
+    image: moderation_service
+    build: 
+      context: ../src
+      dockerfile: /AdSyst.ModerationService/Dockerfile
+    expose:
+      - "80"
+    depends_on:
+      - rabbit
+      - moderation_db
+      - auth_service
+
+  moderation_db:
+    image: mongo
+    expose:
+      - "27017"
+
+  web_files:
+    image: web_files
+    build: 
+      context: ../src
+      dockerfile: /AdSyst.WebFiles/Dockerfile
+    expose:
+      - "80"
+    depends_on:
+      - webFiles_db
+
+  webFiles_db:
+    image: mongo
+    expose:
+      - "27017"
+
+  order_service:
+    image: order_service
+    build: 
+      context: ../src
+      dockerfile: /AdSyst.Orders/Dockerfile
+    expose:
+      - "80"
+    depends_on:
+      - rabbit
+      - orders_db
+      - auth_service
+      - advertisments_api
+
+  orders_db:
+    image: mongo
+    expose:
+      - "27017"
+
+  redis_cache:
+    image: redis
+    expose:
+      - "6379"

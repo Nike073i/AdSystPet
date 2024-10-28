@@ -1,0 +1,18 @@
+syntax = "proto3";
+option csharp_namespace = "AdSyst.AuthService.Api.Grpc";
+
+package users;
+
+service Users {
+    rpc GetUserDataById(GetUserDataByIdRequest) returns (GetUserDataByIdResponse);
+}
+
+message GetUserDataByIdRequest {
+    string userId = 1;
+}
+
+message GetUserDataByIdResponse {
+    string firstName = 1;
+    string lastName = 2;
+    string email = 3;
+}

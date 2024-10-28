@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AdSyst.Common\AdSyst.Common.BusinessLayer\AdSyst.Common.BusinessLayer.csproj" />
+    <ProjectReference Include="..\AdSyst.WebFiles.DAL.MongoDb\AdSyst.WebFiles.DAL.MongoDb.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Magick.NET-Q8-x64" Version="13.5.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AdSyst.Common\AdSyst.Common.Application\AdSyst.Common.Application.csproj" />
+    <ProjectReference Include="..\AdSyst.Orders.BusinessLayer\AdSyst.Orders.BusinessLayer.csproj" />
+    <ProjectReference Include="..\AdSyst.Orders.SyncDataServices\AdSyst.Orders.SyncDataServices.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

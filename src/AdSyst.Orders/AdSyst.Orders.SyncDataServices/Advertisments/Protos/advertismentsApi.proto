@@ -1,0 +1,41 @@
+syntax = "proto3";
+option csharp_namespace = "AdSyst.Advertisments.Api.Grpc";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+package advertisments;
+
+service AdvertismentService {
+    rpc GetAdvertismentSystemDataById(GetAdvertismentSystemDataByIdRequest) returns (GetAdvertismentSystemDataByIdResponse);
+    rpc GetAdvertismentDetails(GetAdvertismentDetailsRequest) returns (GetAdvertismentDetailsResponse);
+}
+
+message GetAdvertismentSystemDataByIdRequest {
+    string advertismentId = 1;
+}
+
+message GetAdvertismentSystemDataByIdResponse {
+    string id = 1;
+    string userId = 2;
+    google.protobuf.Timestamp createdAt = 3;
+    string status = 4;
+}
+
+message GetAdvertismentDetailsRequest {
+    string advertismentId = 1;
+}
+
+message GetAdvertismentDetailsResponse {
+    string id = 1;
+    string title = 2;
+    string description = 3;
+    string advertismentTypeId = 4;
+    string advertismentTypeName = 5;
+    string categoryId = 6;
+    string categoryName = 7;
+    string price = 8;
+    google.protobuf.Timestamp createdAt = 9;
+    string status = 10;
+    string userId = 11;
+    repeated string imageIds = 12;
+}

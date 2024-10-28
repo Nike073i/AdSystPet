@@ -1,0 +1,177 @@
+version: "3.8"
+
+services:
+  advertisments_api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      SqlServerConnectionSettings__DataSource: advertisments_db
+      SqlServerConnectionSettings__UserId: SA
+      SqlServerConnectionSettings__Password: VeryStrongPasSw0rD!
+      SqlServerConnectionSettings__InitialCatalog: advertisments
+      SqlServerConnectionSettings__TrustServerCertificate: true
+      JwtAuthOptions__Authority: http://auth_service
+      JwtAuthOptions__Audience: webApiResource
+      Kestrel__Endpoints__Http__Url: http://*:80
+      Kestrel__Endpoints__gRPC__Url: http://*:36600
+      RabbitMqSettings__ConnectionString: rabbitmq://rabbit:5672
+      RabbitMqSettings__User: guest
+      RabbitMqSettings__Password: guest
+      RedisSettings__ConnectionString: redis_cache:6379
+    ports:
+      - "8080:80"
+
+  advertisments_db:
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: VeryStrongPasSw0rD!
+    volumes:
+      - advertisments_db_data:/var/opt/mssql
+    ports:
+      - "1435:1433"
+
+  auth_service:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      SqlServerConnectionSettings__DataSource: auth_service_db
+      SqlServerConnectionSettings__UserId: SA
+      SqlServerConnectionSettings__Password: VeryStrongPasSw0rD!
+      SqlServerConnectionSettings__InitialCatalog: identity
+      SqlServerConnectionSettings__TrustServerCertificate: true
+      IdentityServerConfigs__IssuerUri: http://auth_service
+      RabbitMqSettings__ConnectionString: rabbitmq://rabbit:5672
+      RabbitMqSettings__User: guest
+      RabbitMqSettings__Password: guest
+      Kestrel__Endpoints__Http__Url: http://*:80
+    ports:
+      - "8081:80"
+
+  auth_service_db:
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: VeryStrongPasSw0rD!
+    ports:
+      - "1434:1433"
+    volumes:
+      - auth_service_db_data:/var/opt/mssql
+
+  rabbit:
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  email_worker:
+    environment:
+      EmailSettings__Password: ${EMAIL_PASSWORD?Password required}
+      EmailSettings__Username: ${EMAIL_USERNAME?Username required}
+      EmailSettings__TlsPort: 587
+      EmailSettings__Host: smtp.gmail.com
+      EmailSettings__AddressFromName: AdSyst-Notifier
+      RabbitMqSettings__ConnectionString: rabbitmq://rabbit:5672
+      RabbitMqSettings__User: guest
+      RabbitMqSettings__Password: guest
+
+  notification_service:
+    environment:
+      RabbitMqSettings__ConnectionString: rabbitmq://rabbit:5672
+      RabbitMqSettings__User: guest
+      RabbitMqSettings__Password: guest
+      JwtAuthOptions__Authority: http://auth_service
+      JwtAuthOptions__Audience: webApiResource
+      MongoSettings__DatabaseName: "notifications"
+      MongoSettings__ConnectionString: "mongodb://SA:VeryStrongPasSw0rD!@notifications_db:27017?authSource=admin"
+    ports:
+      - "8082:80"
+    volumes:
+      - ../src/AdSyst.NotificationService/Templates/:/Templates/
+
+  notifications_db:
+    volumes:
+      - ../db/notifications-mongo-db/:/docker-entrypoint-initdb.d/
+      - notifications_db_data:/data/db
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: SA
+      MONGO_INITDB_ROOT_PASSWORD: VeryStrongPasSw0rD!
+      MONGO_INITDB_DATABASE: notifications
+
+  moderation_service:
+    environment:
+      RabbitMqSettings__ConnectionString: rabbitmq://rabbit:5672
+      RabbitMqSettings__User: guest
+      RabbitMqSettings__Password: guest
+      JwtAuthOptions__Authority: http://auth_service
+      JwtAuthOptions__Audience: webApiResource
+      MongoSettings__DatabaseName: "moderation"
+      MongoSettings__ConnectionString: "mongodb://SA:VeryStrongPasSw0rD!@moderation_db:27017?authSource=admin"
+    ports:
+      - "8083:80"
+
+  moderation_db:
+    volumes:
+      - ../db/moderation-mongo-db/:/docker-entrypoint-initdb.d/
+      - moderation_db_data:/data/db
+    ports:
+      - "27020:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: SA
+      MONGO_INITDB_ROOT_PASSWORD: VeryStrongPasSw0rD!
+      MONGO_INITDB_DATABASE: moderation
+
+  web_files:
+    environment:
+      JwtAuthOptions__Authority: http://auth_service
+      JwtAuthOptions__Audience: webApiResource
+      MongoSettings__DatabaseName: "webFiles"
+      MongoSettings__ConnectionString: "mongodb://SA:VeryStrongPasSw0rD!@webFiles_db:27017?authSource=admin"
+    ports:
+      - "8084:80"
+
+  webFiles_db:
+    volumes:
+      - ../db/webFiles-mongo-db/:/docker-entrypoint-initdb.d/
+      - webFiles_db_data:/data/db
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: SA
+      MONGO_INITDB_ROOT_PASSWORD: VeryStrongPasSw0rD!
+      MONGO_INITDB_DATABASE: webFiles
+
+  order_service:
+    environment:
+      AdvertismentsServiceGrpcClient__Scheme: http
+      AdvertismentsServiceGrpcClient__Host: advertisments_api
+      AdvertismentsServiceGrpcClient__Port: 36600
+      RabbitMqSettings__ConnectionString: rabbitmq://rabbit:5672
+      RabbitMqSettings__User: guest
+      RabbitMqSettings__Password: guest
+      JwtAuthOptions__Authority: http://auth_service
+      JwtAuthOptions__Audience: webApiResource
+      MongoSettings__DatabaseName: "orders"
+      MongoSettings__ConnectionString: "mongodb://SA:VeryStrongPasSw0rD!@orders_db:27017?authSource=admin"
+    ports:
+      - "8085:80"
+
+  orders_db:
+    volumes:
+      - ../db/orders-mongo-db/:/docker-entrypoint-initdb.d/
+      - orders_db_data:/data/db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: SA
+      MONGO_INITDB_ROOT_PASSWORD: VeryStrongPasSw0rD!
+      MONGO_INITDB_DATABASE: orders
+
+  redis_cache:
+    ports:
+      - "6379:6379"
+
+volumes:
+  auth_service_db_data:
+  advertisments_db_data:
+  orders_db_data:
+  notifications_db_data:
+  webFiles_db_data:
+  moderation_db_data:
